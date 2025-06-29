@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcard Kanji Nama Hari</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Noto Sans JP for Japanese characters -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom styles */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .font-jp {
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+        /* Styling for the 3D flip effect */
+        .card-container {
+            perspective: 1000px;
+        }
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        .card-container.is-flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden; /* Safari */
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .card-front {
+            background-color: white;
+            color: black;
+        }
+        .card-back {
+            background-color: #4A5568; /* gray-700 */
+            color: white;
+            transform: rotateY(180deg);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 flex flex-col items-center justify-center min-h-screen p-4">
+
+    <div class="text-center mb-8">
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white">Flashcard Kanji Hari</h1>
+        <p class="text-gray-600 dark:text-gray-300 mt-2">Klik kartu untuk melihat jawaban. Selamat belajar!</p>
+    </div>
+
+    <!-- Flashcard Component -->
+    <div id="flashcard" class="card-container w-full max-w-md h-64 md:h-80 cursor-pointer">
+        <div id="cardInner" class="card-inner">
+            <!-- Front of the card (Kanji) -->
+            <div class="card-face card-front">
+                <h2 id="kanji" class="font-jp text-6xl md:text-8xl font-bold"></h2>
+            </div>
+            <!-- Back of the card (Hiragana, Romaji & Indonesian) -->
+            <div class="card-face card-back p-6 text-center">
+                <p id="hiragana" class="font-jp text-3xl md:text-4xl"></p>
+                <p id="romaji" class="text-2xl md:text-3xl font-semibold mt-2"></p>
+                <p id="indonesian" class="text-xl md:text-2xl mt-4"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Buttons -->
+    <div class="flex items-center space-x-4 mt-8">
+        <button id="prevBtn" class="bg-white dark:bg-gray-700 text-gray-800 dark:text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+        </button>
+        <span id="cardCounter" class="text-gray-700 dark:text-gray-300 font-medium w-12 text-center">1 / 7</span>
+        <button id="nextBtn" class="bg-white dark:bg-gray-700 text-gray-800 dark:text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+        </button>
+    </div>
+
+    <script>
+        // --- Data ---
+        // Data sekarang menyertakan hiragana
+        const days = [
+            { kanji: '日曜日', hiragana: 'にちようび', romaji: 'Nichiyōbi', indonesian: 'Minggu' },
+            { kanji: '月曜日', hiragana: 'げつようび', romaji: 'Getsuyōbi', indonesian: 'Senin' },
+            { kanji: '火曜日', hiragana: 'かようび', romaji: 'Kayōbi', indonesian: 'Selasa' },
+            { kanji: '水曜日', hiragana: 'すいようび', romaji: 'Suiyōbi', indonesian: 'Rabu' },
+            { kanji: '木曜日', hiragana: 'もくようび', romaji: 'Mokuyōbi', indonesian: 'Kamis' },
+            { kanji: '金曜日', hiragana: 'きんようび', romaji: 'Kin\'yōbi', indonesian: 'Jumat' },
+            { kanji: '土曜日', hiragana: 'どようび', romaji: 'Doyōbi', indonesian: 'Sabtu' }
+        ];
+
+        // --- State ---
+        let currentIndex = 0;
+        let isFlipped = false;
+
+        // --- DOM Elements ---
+        const flashcard = document.getElementById('flashcard');
+        const cardInner = document.getElementById('cardInner');
+        const kanjiEl = document.getElementById('kanji');
+        const hiraganaEl = document.getElementById('hiragana'); // Elemen baru untuk hiragana
+        const romajiEl = document.getElementById('romaji');
+        const indonesianEl = document.getElementById('indonesian');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const cardCounterEl = document.getElementById('cardCounter');
+
+        // --- Functions ---
+
+        /**
+         * Updates the content of the flashcard based on the current index.
+         */
+        function updateCardContent() {
+            const currentDay = days[currentIndex];
+            kanjiEl.textContent = currentDay.kanji;
+            hiraganaEl.textContent = currentDay.hiragana; // Update hiragana
+            romajiEl.textContent = currentDay.romaji;
+            indonesianEl.textContent = currentDay.indonesian;
+            cardCounterEl.textContent = `${currentIndex + 1} / ${days.length}`;
+        }
+
+        /**
+         * Flips the card back to the front if it's currently flipped.
+         */
+        function resetFlip() {
+            if (isFlipped) {
+                flashcard.classList.remove('is-flipped');
+                isFlipped = false;
+            }
+        }
+
+        /**
+         * Handles the "Next" button click.
+         */
+        function showNextCard() {
+            currentIndex = (currentIndex + 1) % days.length;
+            resetFlip();
+            setTimeout(updateCardContent, 150);
+        }
+
+        /**
+         * Handles the "Previous" button click.
+         */
+        function showPrevCard() {
+            currentIndex = (currentIndex - 1 + days.length) % days.length;
+            resetFlip();
+            setTimeout(updateCardContent, 150);
+        }
+
+        /**
+         * Toggles the flip state of the card.
+         */
+        function flipCard() {
+            isFlipped = !isFlipped;
+            flashcard.classList.toggle('is-flipped');
+        }
+
+        // --- Event Listeners ---
+        flashcard.addEventListener('click', flipCard);
+        nextBtn.addEventListener('click', showNextCard);
+        prevBtn.addEventListener('click', showPrevCard);
+
+        // --- Initial Load ---
+        updateCardContent();
+
+    </script>
+</body>
+</html>
