@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flashcard Kanji Nama Hari</title>
+    <title>Flashcard Kanji Nama Hari (Acak)</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts: Noto Sans JP for Japanese characters -->
@@ -59,8 +59,8 @@
 <body class="bg-gray-100 dark:bg-gray-900 flex flex-col items-center justify-center min-h-screen p-4">
 
     <div class="text-center mb-8">
-        <h1 class="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white">Flashcard Kanji Hari</h1>
-        <p class="text-gray-600 dark:text-gray-300 mt-2">Klik kartu untuk melihat jawaban. Selamat belajar!</p>
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white">Flashcard Kanji Hari (Acak)</h1>
+        <p class="text-gray-600 dark:text-gray-300 mt-2">Klik kartu untuk melihat jawaban. Semangat belajar!</p>
     </div>
 
     <!-- Flashcard Component -->
@@ -79,24 +79,15 @@
         </div>
     </div>
 
-    <!-- Navigation Buttons -->
-    <div class="flex items-center space-x-4 mt-8">
-        <button id="prevBtn" class="bg-white dark:bg-gray-700 text-gray-800 dark:text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-            </svg>
-        </button>
-        <span id="cardCounter" class="text-gray-700 dark:text-gray-300 font-medium w-12 text-center">1 / 7</span>
-        <button id="nextBtn" class="bg-white dark:bg-gray-700 text-gray-800 dark:text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-            </svg>
+    <!-- Navigation Button (Single Button) -->
+    <div class="flex justify-center mt-8">
+        <button id="nextCardBtn" class="bg-white dark:bg-gray-700 text-gray-800 dark:text-white font-bold py-3 px-8 rounded-lg shadow-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200">
+            Kartu Berikutnya
         </button>
     </div>
 
     <script>
         // --- Data ---
-        // Data sekarang menyertakan hiragana
         const days = [
             { kanji: '日曜日', hiragana: 'にちようび', romaji: 'Nichiyōbi', indonesian: 'Minggu' },
             { kanji: '月曜日', hiragana: 'げつようび', romaji: 'Getsuyōbi', indonesian: 'Senin' },
@@ -107,6 +98,16 @@
             { kanji: '土曜日', hiragana: 'どようび', romaji: 'Doyōbi', indonesian: 'Sabtu' }
         ];
 
+        // --- Shuffled Deck ---
+        let shuffledDays = [...days];
+        
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
         // --- State ---
         let currentIndex = 0;
         let isFlipped = false;
@@ -115,30 +116,24 @@
         const flashcard = document.getElementById('flashcard');
         const cardInner = document.getElementById('cardInner');
         const kanjiEl = document.getElementById('kanji');
-        const hiraganaEl = document.getElementById('hiragana'); // Elemen baru untuk hiragana
+        const hiraganaEl = document.getElementById('hiragana');
         const romajiEl = document.getElementById('romaji');
         const indonesianEl = document.getElementById('indonesian');
-        const prevBtn = document.getElementById('prevBtn');
-        const nextBtn = document.getElementById('nextBtn');
-        const cardCounterEl = document.getElementById('cardCounter');
+        const nextCardBtn = document.getElementById('nextCardBtn');
 
         // --- Functions ---
-
-        /**
-         * Updates the content of the flashcard based on the current index.
-         */
         function updateCardContent() {
-            const currentDay = days[currentIndex];
+            if (currentIndex >= shuffledDays.length) {
+                currentIndex = 0;
+                shuffleArray(shuffledDays);
+            }
+            const currentDay = shuffledDays[currentIndex];
             kanjiEl.textContent = currentDay.kanji;
-            hiraganaEl.textContent = currentDay.hiragana; // Update hiragana
+            hiraganaEl.textContent = currentDay.hiragana;
             romajiEl.textContent = currentDay.romaji;
             indonesianEl.textContent = currentDay.indonesian;
-            cardCounterEl.textContent = `${currentIndex + 1} / ${days.length}`;
         }
 
-        /**
-         * Flips the card back to the front if it's currently flipped.
-         */
         function resetFlip() {
             if (isFlipped) {
                 flashcard.classList.remove('is-flipped');
@@ -146,27 +141,12 @@
             }
         }
 
-        /**
-         * Handles the "Next" button click.
-         */
         function showNextCard() {
-            currentIndex = (currentIndex + 1) % days.length;
+            currentIndex++;
             resetFlip();
             setTimeout(updateCardContent, 150);
         }
 
-        /**
-         * Handles the "Previous" button click.
-         */
-        function showPrevCard() {
-            currentIndex = (currentIndex - 1 + days.length) % days.length;
-            resetFlip();
-            setTimeout(updateCardContent, 150);
-        }
-
-        /**
-         * Toggles the flip state of the card.
-         */
         function flipCard() {
             isFlipped = !isFlipped;
             flashcard.classList.toggle('is-flipped');
@@ -174,10 +154,10 @@
 
         // --- Event Listeners ---
         flashcard.addEventListener('click', flipCard);
-        nextBtn.addEventListener('click', showNextCard);
-        prevBtn.addEventListener('click', showPrevCard);
+        nextCardBtn.addEventListener('click', showNextCard);
 
         // --- Initial Load ---
+        shuffleArray(shuffledDays);
         updateCardContent();
 
     </script>
